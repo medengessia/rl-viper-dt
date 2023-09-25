@@ -1,0 +1,8 @@
+Introduction session
+
+
+- Overview of Reinforcement Learning and its applications.
+
+- Creation of a new GitHub repository.
+
+- Search of some implementations of VIPER algorithm.
