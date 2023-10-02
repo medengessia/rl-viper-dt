@@ -1,0 +1,15 @@
+Week 1:
+
+
+Understand the notebook:
+
+- Have a look at stable_baselines documentation;
+- Have a look at gymnasium documentation.
+ 
+Complete VIPER algorithm.
+
+Add some comments.
+
+Upload on GitHub source file(s) containing the required functions to achieve VIPER, i.e., functions for getting a RL policy, generating a dataset from it, fitting a decision tree with these data and choosing the best tree among several created this way.
+
+Compare the reward sums of decision trees and RL neural networks.
