@@ -1,0 +1,6 @@
+Week 2:
+
+- Add an argument "reward_weight" in the function "generate_data" and implement the probability attributions of the paper accoriding to the rewards, i.e. how they choose the data of the decision trees with respect to the rewards.
+
+- Write a document to introduce the project: describe in natural language the purpose of VIPER, that is approximating the behaviour of a RL agent, which is also an approximation. 
+
