@@ -23,11 +23,12 @@ def get_policy_nn(mdp, algo_rl, n_iter, path_to_expert=None):
     return policy
 
 
-def generate_data(mdp, policy, n_iter):
+def generate_data(mdp, reward_weight, policy, n_iter):
     """Generates data, with actions weighted by their reward.
 
     Args:
         mdp (gym.Env): a Markov Decision Process (Reinforcement Learning Problem)
+        reward_weight (float): Weight to control the influence of rewards on action selection
         policy : A RL policy
         n_iter (int): Number of iterations
 
@@ -41,7 +42,14 @@ def generate_data(mdp, policy, n_iter):
     start = 0  # Initialization of the first index with a particular reward
     for i in range(n_iter):
         X[i] = s   # Current state
-        action, _ = policy.predict(s, deterministic=True)
+
+        # Calculate the action probabilities based on rewards
+        action_values, _ = policy.predict(s, deterministic=False) # Use stochastic action selection
+        action_probs = np.exp(reward_weight * action_values) / np.sum(np.exp(reward_weight * action_values))
+
+        # Choose an action according to the action probabilities
+        action = np.random.choice(policy.action_space.n, p=action_probs)
+
         new_s, reward, terminated, truncated, infos = mdp.step(action) # Moving to a new state
         s = new_s
         y[i] = action   # The chosen action
@@ -112,11 +120,12 @@ def choose_best_dt(dt_list, mdp, n_iter=5_000):
     return best_tree
 
 
-def Viper(mdp, algo_dt, algo_rl, iter_viper, nb_data_from_nnpolicy, path_to_expert=None):
+def Viper(mdp, reward_weight, algo_dt, algo_rl, iter_viper, nb_data_from_nnpolicy, path_to_expert=None):
     """Proposes an implementation of Viper algorithm.
 
     Args:
         mdp (gym.Env): A Markov Decision Process (Reinforcement Learning Problem)
+        reward_weight (float): Weight to control the influence of rewards on action selection
         algo_dt : A decision tree algorithm
         algo_rl : A RL Algorithm
         iter_viper (int): Number of iterations for VIPER
@@ -131,7 +140,7 @@ def Viper(mdp, algo_dt, algo_rl, iter_viper, nb_data_from_nnpolicy, path_to_expe
 
     for i in range(iter_viper):
         print('iteration {}'.format(i))
-        data = generate_data(mdp, policy, nb_data_from_nnpolicy)
+        data = generate_data(mdp, reward_weight, policy, nb_data_from_nnpolicy)
         dt = fit_dt(data, algo_dt)
         dt_list.append(dt)
 
