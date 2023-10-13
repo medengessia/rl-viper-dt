@@ -74,9 +74,11 @@ def get_data_from_datasets(datasets):
     """
     datasets = np.array(datasets)
     indices = datasets.shape[0]
-    sum_max = np.sum([np.amax(datasets[i][2]) for i in range(len(datasets))])
-    distributions = [np.amax(datasets[i][2])/sum_max for i in range(len(datasets))]
-    dataset_dt_indices = np.random.choice(indices, 1, replace=False, p=distributions)
+
+    sum_max = np.sum([np.amax(datasets[i][:,5]) for i in range(len(datasets))])
+    distributions = [np.amax(datasets[i][:,5])/sum_max for i in range(len(datasets))]
+
+    dataset_dt_indices = np.random.choice(indices, 1, p=distributions)
     dataset_dt = datasets[list(dataset_dt_indices)].squeeze()
 
     return dataset_dt
