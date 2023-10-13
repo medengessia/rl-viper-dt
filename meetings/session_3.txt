@@ -1,0 +1,5 @@
+Week 3:
+
+- End the implementation of VIPER, finding an attribution of probabilities for the dataset to be selected based on the rewards.
+
+- Add a pseudo-code of VIPER in the Overleaf document.
