@@ -72,9 +72,12 @@ def get_data_from_datasets(datasets):
     Returns:
         Ndarray: The chosen dataset.
     """
+    datasets = np.array(datasets)
+    indices = datasets.shape[0]
     sum_max = np.sum([np.amax(datasets[i][2]) for i in range(len(datasets))])
     distributions = [np.amax(datasets[i][2])/sum_max for i in range(len(datasets))]
-    dataset_dt = np.random.choice(datasets, 1, p=distributions)
+    dataset_dt_indices = np.random.choice(indices, 1, replace=False, p=distributions)
+    dataset_dt = datasets[list(dataset_dt_indices)].squeeze()
 
     return dataset_dt
 
@@ -90,7 +93,7 @@ def fit_dt(data, algo_dt, depth=5):
     Returns:
         The trained decicision tree.
     """
-    X, y, rewards = data[:,0], data[:,1], data[:,2] # Extracting the states as input features and the actions as labels
+    X, y, rewards = data[:,:4], data[:,4], data[:,5] # Extracting the states as input features and the actions as labels
     d_tree = algo_dt(max_depth=depth)
     d_tree.fit(X,y) # Training of the decision tree 
     print("Score of fitted DT is {}".format(d_tree.score(X,y)))
