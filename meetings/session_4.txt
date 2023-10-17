@@ -1,0 +1,7 @@
+Week 4:
+
+- Generalize the code for different probability distributions (uniform, cumulated reward, instant reward).
+
+- Do some experiments with the different distributions on Acrobot-v1 and CartPole-v1.
+
+- Make graphs and plots of the results and draw some conclusions.

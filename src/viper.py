@@ -1,14 +1,14 @@
 import numpy as np
 
 
-def get_policy_nn(mdp, algo_rl, n_iter, path_to_expert=None):
+def get_policy_nn(mdp, algo_rl, n_iter, path_to_expert):
     """Generates a RL policy by training a RL Neural Network and returns the policy.
 
     Args:
         mdp (gym.Env): a Markov Decision Process (Reinforcement Learning Problem).
         algo_rl : A RL Algorithm.
         n_iter (int): Number of iterations.
-        path_to_expert (str): a path to an existing policy. Defaults to None.
+        path_to_expert (str): a path to an existing policy.
 
     Returns:
         The obtained policy.
@@ -23,13 +23,14 @@ def get_policy_nn(mdp, algo_rl, n_iter, path_to_expert=None):
     return policy
 
 
-def generate_data(mdp, policy, n_iter):
+def generate_data(mdp, policy, n_iter, reward_mode):
     """Generates data, with actions weighted by their reward.
 
     Args:
         mdp (gym.Env): a Markov Decision Process (Reinforcement Learning Problem).
         policy : A RL policy.
         n_iter (int): Number of iterations.
+        reward_mode (str): The way of associating a reward to a (S,a) couple between 'cumulative' and 'instant'.
 
     Returns:
         Ndarray: The obtained dataset.
@@ -48,13 +49,18 @@ def generate_data(mdp, policy, n_iter):
         s = new_s # Getting a new state
 
         y[i] = action   # The chosen action
+
+        if reward_mode == 'instant':
+            rewards[i] = reward
+
         r_T += reward
 
         if terminated or truncated:  # At this point, r_T is the cumulated reward along the episode
             s, _ = mdp.reset()
-            rewards[start:i+1] = r_T
-            start = i + 1   # The variable start takes the value of the next index
-            r_T = 0 
+            if reward_mode == 'cumulative':
+                rewards[start:i+1] = r_T
+                start = i + 1   # The variable start takes the value of the next index
+            r_T = 0
 
     dataset = np.hstack((X,y))
     dataset = np.hstack((dataset,rewards))
@@ -62,24 +68,27 @@ def generate_data(mdp, policy, n_iter):
     return dataset
 
 
-def get_data_from_datasets(datasets):
+def get_data_from_datasets(datasets, distribution):
     """Extracts a dataset for training a decision tree from a list of datasets based on their biggest reward,
     with respect to a probability distribution.
 
     Args:
-        datasets (list): A list of datasets.
+        datasets (Ndarray): An array of datasets.
+        distribution (str): The chosen distribution between 'reward_based' and 'uniform' distributions.
 
     Returns:
         Ndarray: The chosen dataset.
     """
-    datasets = np.array(datasets)
     indices = datasets.shape[0]
 
-    sum_max = np.sum([np.amax(datasets[i][:,5]) for i in range(len(datasets))])
-    distributions = [np.amax(datasets[i][:,5])/sum_max for i in range(len(datasets))]
+    if distribution == 'reward_based':
+        probabilities = datasets[:,5]/datasets[:,5].sum()
+        dataset_dt_indices = np.random.choice(np.arange(indices), 1000, replace=False, p=probabilities)
 
-    dataset_dt_indices = np.random.choice(indices, 1, p=distributions)
-    dataset_dt = datasets[list(dataset_dt_indices)].squeeze()
+    if distribution == 'uniform':
+        dataset_dt_indices = np.random.choice(np.arange(indices), 1000, replace=False)
+
+    dataset_dt = datasets[dataset_dt_indices]
 
     return dataset_dt
 
@@ -140,7 +149,7 @@ def choose_best_dt(dt_list, mdp, n_iter=5_000):
     return best_tree
 
 
-def Viper(mdp, algo_dt, algo_rl, iter_viper, nb_data_from_nnpolicy, path_to_expert=None):
+def Viper(mdp, algo_dt, algo_rl, iter_viper, nb_data_from_nnpolicy, reward_mode='cumulative', distribution='reward_based', path_to_expert=None):
     """Proposes an implementation of Viper algorithm.
 
     Args:
@@ -149,22 +158,27 @@ def Viper(mdp, algo_dt, algo_rl, iter_viper, nb_data_from_nnpolicy, path_to_expe
         algo_rl : A RL Algorithm.
         iter_viper (int): Number of iterations for VIPER.
         nb_data_from_nnpolicy (int): Number of iterations for data generating functions.
+        reward_mode (str): The way of associating a reward to a (S,a) couple between 'cumulative' and 'instant'. Defaults to 'cumulative'.
+        distribution (str): The chosen distribution between 'reward_based' and 'uniform' distributions. Defaults to 'reward_based'. 
         path_to_expert (str): A path to an existing policy. Defaults to None.
 
     Returns:
         The best decision tree to evaluate a policy.
     """
-    datasets = []
-    policy = get_policy_nn(mdp, algo_rl, nb_data_from_nnpolicy, path_to_expert)
     dt_list = []
+    policy = get_policy_nn(mdp, algo_rl, nb_data_from_nnpolicy, path_to_expert)
 
     for i in range(iter_viper):
         print('iteration {}'.format(i))
 
-        data = generate_data(mdp, policy, nb_data_from_nnpolicy)
+        data = generate_data(mdp, policy, nb_data_from_nnpolicy, reward_mode)
 
-        datasets.append(data)
-        dataset_dt = get_data_from_datasets(datasets)
+        if i > 0:
+            datasets = np.vstack((datasets, data))
+        else:
+            datasets = data
+        
+        dataset_dt = get_data_from_datasets(datasets, distribution)
 
         dt = fit_dt(dataset_dt, algo_dt)
         dt_list.append(dt)
