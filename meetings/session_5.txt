@@ -1,0 +1,5 @@
+Week 5:
+
+- Describe the experimental protocol for getting best tree rewards over the three environments.
+
+- Report on the overleaf the conclusions you can make about the results.
