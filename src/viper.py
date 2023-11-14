@@ -72,11 +72,12 @@ def generate_data(mdp, policy, n_iter, reward_mode):
     return dataset
 
 
-def get_data_from_datasets(datasets):
+def get_data_from_datasets(datasets, nb_data_from_nnpolicy):
     """Extracts a dataset for training a decision tree from a list of datasets based on their reward probabilities.
 
     Args:
         datasets (Ndarray): An array of datasets.
+        nb_data_from_nnpolicy (int): Number of iterations for data generating functions.
 
     Returns:
         Ndarray: The chosen dataset.
@@ -85,11 +86,10 @@ def get_data_from_datasets(datasets):
 
     probabilities = datasets[:,-1]/datasets[:,-1].sum()
     
-    if any(x == 0 for x in probabilities):
-        probabilities = np.where(probabilities == 0, 1e-10, probabilities)
-        probabilities = probabilities/probabilities.sum()
+    probabilities = np.where(probabilities == 0, 1e-10, probabilities)
+    probabilities = probabilities/probabilities.sum()
 
-    dataset_dt_indices = np.random.choice(np.arange(indices), 1000, replace=False, p=probabilities)
+    dataset_dt_indices = np.random.choice(np.arange(indices), nb_data_from_nnpolicy, replace=False, p=probabilities)
 
     dataset_dt = datasets[dataset_dt_indices]
 
@@ -173,7 +173,7 @@ def Viper(mdp, algo_dt, algo_rl, iter_viper, nb_data_from_nnpolicy, reward_mode=
         else:
             datasets = data
         
-        dataset_dt = get_data_from_datasets(datasets)
+        dataset_dt = get_data_from_datasets(datasets, nb_data_from_nnpolicy)
 
         dt = fit_dt(dataset_dt, algo_dt)
         scores[i] = eval(dt, mdp)
