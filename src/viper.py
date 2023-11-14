@@ -52,18 +52,17 @@ def generate_data(mdp, policy, n_iter, reward_mode):
         if reward_mode == 'instant':
             rewards[i] = reward
 
+        if reward_mode == 'uniform':
+                rewards[i] = np.random.uniform(0, 1)
+
         r_T += reward
 
         if terminated or truncated:  # At this point, r_T is the cumulated reward along the episode
             s, _ = mdp.reset()
 
-            if reward_mode == 'uniform':
-                rewards[start:i+1] = np.random.uniform(0, 1)
-
             if reward_mode == 'cumulative':
                 rewards[start:i+1] = r_T
-
-            start = i + 1   # The variable start takes the value of the next index
+                start = i + 1   # The variable start takes the value of the next index
             
             r_T = 0
 
@@ -86,8 +85,8 @@ def get_data_from_datasets(datasets):
 
     probabilities = datasets[:,-1]/datasets[:,-1].sum()
     
-    if any(x <= 0 for x in probabilities):
-        probabilities = np.where(probabilities <= 0, 1e-10, probabilities)
+    if any(x == 0 for x in probabilities):
+        probabilities = np.where(probabilities == 0, 1e-10, probabilities)
         probabilities = probabilities/probabilities.sum()
 
     dataset_dt_indices = np.random.choice(np.arange(indices), 1000, replace=False, p=probabilities)
@@ -137,6 +136,8 @@ def eval(dt, mdp, n_iter=10):
         while not done:
             action = dt.predict([s]) # Entering a state
             new_s, reward, terminated, truncated, infos = mdp.step(int(action[0])) # Seeing how the decision tree imitates a RL agent
+
+            s = new_s # Getting a new state
             r_traj += reward
             done = terminated or truncated
         score_mean += r_traj
