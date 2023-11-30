@@ -96,23 +96,32 @@ def get_data_from_datasets(datasets, nb_data_from_nnpolicy):
     return dataset_dt
 
 
-def fit_dt(data, algo_dt, depth=5):
+def fit_dtrees(data, algo_dt, depth=10):
     """Fits a decision tree to the policy-generated dataset and returns it with its score.
 
     Args:
         data (Ndarray): The dataset to fit.
         algo_dt : A decision tree algorithm.
-        depth (int, optional): The desired maximal depth. Defaults to 5.
+        depth (int, optional): The desired maximal depth. Defaults to 10.
 
     Returns:
-        tree: The trained decicision tree.
+        list: A list of trained decicision trees.
     """
     X, y, rewards = data[:,:-2], data[:,-2], data[:,-1] # Extracting the states as input features and the actions as labels
-    d_tree = algo_dt(max_depth=depth)
-    d_tree.fit(X,y) # Training the decision tree on the RL dataset 
+
+    clf = algo_dt(random_state=0)
+    path = clf.cost_complexity_pruning_path(X, y)
+    ccp_alphas = path.ccp_alphas
+
+    d_trees = []
+    for ccp_alpha in ccp_alphas:
+        d_tree = algo_dt(max_depth=depth, random_state=0, ccp_alpha=ccp_alpha)
+        d_tree.fit(X, y) # Training each decision tree on the RL dataset
+        d_trees.append(d_tree)
+
     #print("Score of fitted DT is {}".format(d_tree.score(X,y)))
 
-    return d_tree
+    return d_trees
 
 
 def eval(dt, mdp, n_iter=10):
@@ -124,7 +133,7 @@ def eval(dt, mdp, n_iter=10):
         n_iter (int, optional): Number of iterations. Defaults to 10.
 
     Returns:
-        float: The mean cumulative reward over the iterations.
+        float: The mean cumulative reward of a tree over the iterations.
     """
     score_mean = 0
 
@@ -160,7 +169,9 @@ def Viper(mdp, algo_dt, algo_rl, iter_viper, nb_data_from_nnpolicy, reward_mode=
     Returns:
         Ndarray: The mean cumulative rewards of the trees.
     """
-    scores = np.zeros(iter_viper)
+    list_scores = []
+    list_dtrees = []
+    number_of_nodes = []
     policy = get_policy_nn(mdp, algo_rl, nb_data_from_nnpolicy, path_to_expert)
 
     for i in range(iter_viper):
@@ -175,75 +186,18 @@ def Viper(mdp, algo_dt, algo_rl, iter_viper, nb_data_from_nnpolicy, reward_mode=
         
         dataset_dt = get_data_from_datasets(datasets, nb_data_from_nnpolicy)
 
-        dt = fit_dt(dataset_dt, algo_dt)
-        scores[i] = eval(dt, mdp)
+        d_trees = fit_dtrees(dataset_dt, algo_dt)
+        list_dtrees.append(d_trees)
+    
+    max_dtrees_per_list = min([len(dtrees) for dtrees in list_dtrees])
 
-    return scores
+    for i in range(iter_viper):
+        list_dtrees[i] = list_dtrees[i][:max_dtrees_per_list]
 
+        for j in range(max_dtrees_per_list):
+            list_scores.append(eval(list_dtrees[i][j], mdp))
+            number_of_nodes.append(list_dtrees[i][j].tree_.node_count)
 
+    number_of_trees = iter_viper*max_dtrees_per_list 
 
-
-
-#### Just in case
-
-# def choose_best_dt(dt_list, mdp, n_iter=5_000):
-#     """Returns the top-scored decision tree and its rewards.
-
-#     Args:
-#         dt_list (list): A list of decision trees coupled with their scores.
-#         mdp (gym.Env): A Markov Decision Process (Reinforcement Learning Problem).
-#         n_iter (int): Number of exploration iterations. Defaults to 5_000.
-
-#     Returns:
-#         tuple: The best decision tree and its rewards.
-#     """
-#     scores = [dt_list[i][1] for i in range(len(dt_list))]
-#     index = scores.index(max(scores))
-
-#     best_tree = dt_list[index][0]  # Taking the best trained tree
-#     rewards = np.zeros((n_iter,1))  # Preparing the vessel of its rewards
-
-#     s, _ = mdp.reset()
-#     r_T = 0    # The computed reward for one trajectory
-
-#     start = 0  # Initialization of the first index with a particular reward
-#     for i in range(n_iter):
-        
-#         action = best_tree.predict([s]) # Entering a state
-#         new_s, reward, terminated, truncated, infos = mdp.step(int(action[0])) # Seeing how a decision tree imitates a RL agent
-#         s = new_s # Getting a new state
-#         r_T += reward
-
-#         if terminated or truncated: # At this point, r_T is the cumulated reward along the episode
-#             s, _ = mdp.reset()
-#             rewards[start:i+1] = r_T
-#             start = i + 1   # The variable start takes the value of the next index
-#             r_T = 0
-        
-#     return best_tree, rewards
-
-
-
-
-# best_tree = dt_list[0]
-#     best_reward = 0
-
-#     for dt in dt_list: # Computing the total reward for each decision tree
-
-#         s, _ = mdp.reset()
-#         sum_rewards = 0
-
-#         for i in range(n_iter):
-            
-#             action = dt.predict([s]) # Entering a state
-#             new_s, reward, terminated, truncated, infos = mdp.step(int(action[0])) # Seeing how a decision tree imitates a RL agent
-#             s = new_s # Getting a new state
-#             sum_rewards += reward
-
-#             if terminated or truncated:
-#                 s, _ = mdp.reset()
-        
-#         if sum_rewards > best_reward: # Updating the best reward and the best tree
-#             best_reward = sum_rewards
-#             #print("New best reward is {}".format(best_reward))
-#             best_tree = dt
+    return number_of_trees, number_of_nodes, list_scores
