@@ -1,0 +1,5 @@
+Week 8:
+
+- Plot the standard deviations of the rewards on top of the mean.
+
+- Plot in 3D, the number of trees, the number of nodes, and the rewards.

@@ -1,0 +1,9 @@
+Week 6:
+
+- Vary the iter_loop parameter for increasing the size of the experiment.
+
+- Vary the number of sampled data as well.
+
+10000 sampled data
+20 iter viper
+10 reps

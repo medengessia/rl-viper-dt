@@ -1,0 +1,7 @@
+Week 7:
+
+- Read the post pruning section of scikit-learn.
+
+- Integrate the code on yours so that one can fit multiple decision trees at a time.
+
+- Plot in 3D the list of scores.
