@@ -96,32 +96,23 @@ def get_data_from_datasets(datasets, nb_data_from_nnpolicy):
     return dataset_dt
 
 
-def fit_dtrees(data, algo_dt, depth=10):
+def fit_dt(data, algo_dt, depth=5):
     """Fits a decision tree to the policy-generated dataset and returns it with its score.
 
     Args:
         data (Ndarray): The dataset to fit.
         algo_dt : A decision tree algorithm.
-        depth (int, optional): The desired maximal depth. Defaults to 10.
+        depth (int, optional): The desired maximal depth. Defaults to 5.
 
     Returns:
-        list: A list of trained decicision trees.
+        tree: The trained decicision tree.
     """
     X, y, rewards = data[:,:-2], data[:,-2], data[:,-1] # Extracting the states as input features and the actions as labels
-
-    clf = algo_dt(random_state=0)
-    path = clf.cost_complexity_pruning_path(X, y)
-    ccp_alphas = path.ccp_alphas
-
-    d_trees = []
-    for ccp_alpha in ccp_alphas:
-        d_tree = algo_dt(max_depth=depth, random_state=0, ccp_alpha=ccp_alpha)
-        d_tree.fit(X, y) # Training each decision tree on the RL dataset
-        d_trees.append(d_tree)
-
+    d_tree = algo_dt(max_depth=depth)
+    d_tree.fit(X,y) # Training the decision tree on the RL dataset 
     #print("Score of fitted DT is {}".format(d_tree.score(X,y)))
 
-    return d_trees
+    return d_tree
 
 
 def eval(dt, mdp, n_iter=10):
@@ -133,7 +124,7 @@ def eval(dt, mdp, n_iter=10):
         n_iter (int, optional): Number of iterations. Defaults to 10.
 
     Returns:
-        float: The mean cumulative reward of a tree over the iterations.
+        float: The mean cumulative reward over the iterations.
     """
     score_mean = 0
 
@@ -169,9 +160,7 @@ def Viper(mdp, algo_dt, algo_rl, iter_viper, nb_data_from_nnpolicy, reward_mode=
     Returns:
         Ndarray: The mean cumulative rewards of the trees.
     """
-    list_scores = []
-    list_dtrees = []
-    number_of_nodes = []
+    scores = np.zeros(iter_viper)
     policy = get_policy_nn(mdp, algo_rl, nb_data_from_nnpolicy, path_to_expert)
 
     for i in range(iter_viper):
@@ -186,18 +175,7 @@ def Viper(mdp, algo_dt, algo_rl, iter_viper, nb_data_from_nnpolicy, reward_mode=
         
         dataset_dt = get_data_from_datasets(datasets, nb_data_from_nnpolicy)
 
-        d_trees = fit_dtrees(dataset_dt, algo_dt)
-        list_dtrees.append(d_trees)
-    
-    max_dtrees_per_list = min([len(dtrees) for dtrees in list_dtrees])
+        dt = fit_dt(dataset_dt, algo_dt)
+        scores[i] = eval(dt, mdp)
 
-    for i in range(iter_viper):
-        list_dtrees[i] = list_dtrees[i][:max_dtrees_per_list]
-
-        for j in range(max_dtrees_per_list):
-            list_scores.append(eval(list_dtrees[i][j], mdp))
-            number_of_nodes.append(list_dtrees[i][j].tree_.node_count)
-
-    number_of_trees = iter_viper*max_dtrees_per_list 
-
-    return number_of_trees, number_of_nodes, list_scores
+    return scores

@@ -1,0 +1,9 @@
+Week 9:
+
+- Test on greater datasets the behaviour of the trees regarding the number of nodes and their obtained rewards.
+
+- Run experiments on CartPole-v1 this time.
+
+- Try a new plot in 3D with this setting.
+
+- Optional : try to make it work on LunarLander-v2.
