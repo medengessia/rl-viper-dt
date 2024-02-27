@@ -1,0 +1,9 @@
+Week 10:
+
+- 20 viper iterations
+- 2000 more data at each iteration
+- 10 eval index
+- repeat x5
+- max depth 4, 6, 8
+- Evaluate the mean performance of viper
+- max leaf nodes 2^4-1, 2^6-1, 2^8-1
