@@ -189,6 +189,9 @@ if __name__ == "__main__":
     iter_viper = 20
     nb_data_from_nn_policy = 10_000
 
+    out_dir_plots = os.path.join('plots')
+    os.makedirs(out_dir_plots, exist_ok=True)
+
     for k, env_name in enumerate(["Acrobot-v1", "CartPole-v1", "LunarLander-v2"]):
 
         env = gym.make(env_name)
@@ -215,9 +218,6 @@ if __name__ == "__main__":
 
             plt.plot(mean_acc/1, label="mean-accuracy-depth-{}".format(d), c=colors[i], linestyle = "dotted")
             plt.plot(mean_eval/1, label="mean-eval-depth-{}".format(d), c=colors[i])
-
-        out_dir_plots = os.path.join('plots')
-        os.makedirs(out_dir_plots, exist_ok=True)
             
         plt.legend()
         plt.title(env_name)
