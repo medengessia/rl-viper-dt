@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import gymnasium as gym
 import matplotlib.pyplot as plt
@@ -188,7 +189,7 @@ if __name__ == "__main__":
     iter_viper = 20
     nb_data_from_nn_policy = 10_000
 
-    for k, env_name in enumerate(["LunarLander-v2"]):
+    for k, env_name in enumerate(["Acrobot-v1", "CartPole-v1", "LunarLander-v2"]):
 
         env = gym.make(env_name)
         path_to_expert = 'policies/' + env_name + '.zip'
@@ -199,10 +200,14 @@ if __name__ == "__main__":
         colors = ["black", "red", "blue"]
         for i, d in enumerate([4,6,8]):
 
+            out_dir_data = os.path.join('saved_dt_gymnasium/{}/depth{}'.format(env_name,d))
+            os.makedirs(out_dir_data, exist_ok=True)
+
             mean_acc = 0
             mean_eval = 0
             for seed in range(5):
                 best_dt, list_acc, list_eval = viper(env, policy, algo_dt, iter_viper, nb_data_from_nn_policy, depth=d)
+
                 dump(best_dt, "saved_dt_gymnasium/{}/depth{}/seed{}.joblib".format(env_name,d,seed))
                 list_eval = list_eval/perf_expert
                 mean_acc = mean_acc + list_acc
@@ -210,6 +215,9 @@ if __name__ == "__main__":
 
             plt.plot(mean_acc/1, label="mean-accuracy-depth-{}".format(d), c=colors[i], linestyle = "dotted")
             plt.plot(mean_eval/1, label="mean-eval-depth-{}".format(d), c=colors[i])
+
+        out_dir_plots = os.path.join('plots')
+        os.makedirs(out_dir_plots, exist_ok=True)
             
         plt.legend()
         plt.title(env_name)
