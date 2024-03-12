@@ -1,6 +1,6 @@
 import os
+import gym
 import numpy as np
-import gymnasium as gym
 import matplotlib.pyplot as plt
 from stable_baselines3 import DQN
 
@@ -40,12 +40,12 @@ def get_perf_expert(env, model, n_iter=10):
     """
     avg = 0
     for _ in range(n_iter):
-        s, _ = env.reset()
+        s = env.reset()
         done = False
         tot = 0
         while not done:
             action = model.predict(s, deterministic=True)[0]
-            s, r, term, trunc, _ = env.step(action)
+            s, r, term, trunc = env.step(action)
             done = term or trunc
             tot += r
         avg += tot
