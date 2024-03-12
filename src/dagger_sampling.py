@@ -1,7 +1,7 @@
 import os
-import gym
 import time
 import numpy as np
+import gymnasium as gym
 import matplotlib.pyplot as plt
 from joblib import dump
 from sklearn import tree
@@ -41,7 +41,7 @@ def generate_data(env, model, n_iter):
     Returns:
         Ndarray: The obtained dataset.
     """
-    s = env.reset()
+    s, _ = env.reset()
     S, A = np.zeros((n_iter, env.observation_space.shape[0])), np.zeros((n_iter,1))
 
     for _ in range(n_iter):
@@ -50,11 +50,11 @@ def generate_data(env, model, n_iter):
         action, _ = model.predict(s, deterministic=True) # Entering a state
         A[i] = action  # Chosen action
 
-        new_s, _, terminated, truncated = env.step(action) # Taking action
+        new_s, _, terminated, truncated, _ = env.step(action) # Taking action
         s = new_s # Getting a new state
 
         if terminated or truncated:
-            s = env.reset()
+            s, _ = env.reset()
 
     return S, A
 
@@ -102,7 +102,7 @@ def eval(dt, env, n_iter=5000):
         float: The mean cumulative reward of a tree over the iterations.
     """
     S = []
-    s = env.reset()
+    s, _ = env.reset()
     tot_steps = 0
     rew_per_trajs = []
     tot_rew_current_traj = 0
@@ -111,13 +111,13 @@ def eval(dt, env, n_iter=5000):
         done = False
         S.append(s)
         action = dt.predict([s]) # Entering a state
-        new_s, reward, terminated, truncated = env.step(int(action[0])) # The decision tree imitates a RL agent
+        new_s, reward, terminated, truncated, _ = env.step(int(action[0])) # The decision tree imitates a RL agent
         tot_rew_current_traj += reward
         tot_steps += 1
         done = terminated or truncated
 
         if done:
-            s = env.reset()
+            s, _ = env.reset()
             rew_per_trajs.append(tot_rew_current_traj)
             tot_rew_current_traj = 0
         else:
@@ -142,12 +142,12 @@ def get_perf_expert(env, model, n_iter=10):
     """
     avg = 0
     for _ in range(n_iter):
-        s = env.reset()
+        s, _ = env.reset()
         done = False
         tot = 0
         while not done:
             action = model.predict(s, deterministic=True)[0]
-            s, r, term, trunc = env.step(action)
+            s, r, term, trunc, _ = env.step(action)
             done = term or trunc
             tot += r
         avg += tot
