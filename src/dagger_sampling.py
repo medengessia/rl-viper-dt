@@ -217,10 +217,10 @@ if __name__ == "__main__":
 
     for regul_type in ["max_depth", "max_leaf_nodes"]:
 
-        for k, env_name in enumerate(["Acrobot-v1", "CartPole-v1", "MountainCar-v0"]):
+        for k, env_name in enumerate(["Acrobot-v1", "CartPole-v1", "LunarLander-v2", "MountainCar-v0"]):
 
             env = gym.make(env_name)
-            path_to_expert = '/content/drive/MyDrive/Colab Notebooks/Research Project/policies/' + env_name + '.zip'
+            path_to_expert = 'policies/' + env_name + '.zip'
             model = get_policy_nn(env, algo_rl, nb_data_from_nn_policy, path_to_expert)
             perf_expert = get_perf_expert(env, model)
             print(perf_expert)
@@ -235,7 +235,7 @@ if __name__ == "__main__":
                     l_nodes = 2**d - 1
 
                     for seed in range(5):
-                        file_path = os.path.join("/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed))
+                        file_path = os.path.join("experiments_dagger/{}/{}/{}/seed{}".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed))
                         os.makedirs(file_path, exist_ok=True)
 
                         # START TIMER 
@@ -247,17 +247,20 @@ if __name__ == "__main__":
                         # END TIMER
 
                         elapsed = end - start
-                        np.save("/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}/list_acc.npy".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed), np.hstack((list_acc, np.array([np.mean(list_acc), np.std(list_acc)]))))
-                        np.save("/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}/list_eval.npy".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed), np.hstack((list_eval, np.array([np.mean(list_eval), np.std(list_eval)]))))
-                        np.save("/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}/best_dt_eval.npy".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed), np.array([best_dt_eval]))
-                        np.save("/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}/algo_duration_in_seconds.npy".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed), np.array([elapsed]))
-                        dump(best_dt, "/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}/best_dt.joblib".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed))
+                        np.save("experiments_dagger/{}/{}/{}/seed{}/list_acc.npy".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed), np.hstack((list_acc, np.array([np.mean(list_acc), np.std(list_acc)]))))
+                        np.save("experiments_dagger/{}/{}/{}/seed{}/list_eval.npy".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed), np.hstack((list_eval, np.array([np.mean(list_eval), np.std(list_eval)]))))
+                        np.save("experiments_dagger/{}/{}/{}/seed{}/best_dt_eval.npy".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed), np.array([best_dt_eval]))
+                        np.save("experiments_dagger/{}/{}/{}/seed{}/algo_duration_in_seconds.npy".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed), np.array([elapsed]))
+                        dump(best_dt, "experiments_dagger/{}/{}/{}/seed{}/best_dt.joblib".format(regul_type, env_name, regul_type + str(l_nodes).rjust(3, '0'), seed))
                         
                         if env_name == "Acrobot-v1":
                             list_eval_norm = (list_eval+500)/(perf_expert+500)
 
                         elif env_name == "MountainCar-v0":
                             list_eval_norm = (list_eval+200)/(perf_expert+200)
+
+                        elif env_name == "LunarLander-v2":
+                            list_eval_norm = (list_eval+1000)/(perf_expert+1000)
 
                         else:
                             list_eval_norm = list_eval/perf_expert
@@ -273,7 +276,7 @@ if __name__ == "__main__":
                 else:
 
                     for seed in range(5):
-                        file_path = os.path.join("/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed))
+                        file_path = os.path.join("experiments_dagger/{}/{}/{}/seed{}".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed))
                         os.makedirs(file_path, exist_ok=True)
 
                         # START TIMER
@@ -285,17 +288,20 @@ if __name__ == "__main__":
                         # END TIMER
 
                         elapsed = end - start
-                        np.save("/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}/list_acc.npy".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed), np.hstack((list_acc, np.array([np.mean(list_acc), np.std(list_acc)]))))
-                        np.save("/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}/list_eval.npy".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed), np.hstack((list_eval, np.array([np.mean(list_eval), np.std(list_eval)]))))
-                        np.save("/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}/best_dt_eval.npy".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed), np.array([best_dt_eval]))
-                        np.save("/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}/algo_duration_in_seconds.npy".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed), np.array([elapsed]))
-                        dump(best_dt, "/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/{}/seed{}/best_dt.joblib".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed))
+                        np.save("experiments_dagger/{}/{}/{}/seed{}/list_acc.npy".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed), np.hstack((list_acc, np.array([np.mean(list_acc), np.std(list_acc)]))))
+                        np.save("experiments_dagger/{}/{}/{}/seed{}/list_eval.npy".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed), np.hstack((list_eval, np.array([np.mean(list_eval), np.std(list_eval)]))))
+                        np.save("experiments_dagger/{}/{}/{}/seed{}/best_dt_eval.npy".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed), np.array([best_dt_eval]))
+                        np.save("experiments_dagger/{}/{}/{}/seed{}/algo_duration_in_seconds.npy".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed), np.array([elapsed]))
+                        dump(best_dt, "experiments_dagger/{}/{}/{}/seed{}/best_dt.joblib".format(regul_type, env_name, regul_type + str(d).rjust(2, '0'), seed))
     
                         if env_name == "Acrobot-v1":
                             list_eval_norm = (list_eval+500)/(perf_expert+500)
 
                         elif env_name == "MountainCar-v0":
                             list_eval_norm = (list_eval+200)/(perf_expert+200)
+
+                        elif env_name == "LunarLander-v2":
+                            list_eval_norm = (list_eval+1000)/(perf_expert+1000)
 
                         else:
                             list_eval_norm = list_eval/perf_expert
@@ -312,5 +318,5 @@ if __name__ == "__main__":
             plt.title(env_name)
             plt.xlabel("Dagger Iteration")
             plt.grid()
-            plt.savefig("/content/drive/MyDrive/Colab Notebooks/Research Project/experiments_dagger/{}/{}/res_{}_{}.pdf".format(regul_type, env_name, env_name, regul_type)) # 1 ENV + 1 regul type
+            plt.savefig("experiments_dagger/{}/{}/res_{}_{}.pdf".format(regul_type, env_name, env_name, regul_type)) # 1 ENV + 1 regul type
             plt.clf()
